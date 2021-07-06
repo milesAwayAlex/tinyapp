@@ -1,5 +1,7 @@
 import express from 'express';
 import morgan from 'morgan';
+import parser from 'body-parser';
+import { nanoid } from 'nanoid';
 
 const port = 8080;
 const app = express();
@@ -9,7 +11,9 @@ const urlDatabase = {
 };
 
 app.use(morgan('dev'));
+app.use(parser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
+
 app.get('/', (req, res) => res.send('Hello!'));
 app.get('/urls', (req, res) => res.render('urlsIndex', { urls: urlDatabase }));
 app.get('/urls/new', (req, res) => res.render('urlsNew'));
@@ -21,6 +25,13 @@ app.get('/urls/:shortURL', (req, res) => {
 app.get('/urls.json', (req, res) => res.json(urlDatabase));
 app.get('/hello', (req, res) => {
   res.send('<html><body>Hello <b>World</b></body></html>\n');
+});
+
+app.post('/urls', (req, res) => {
+  const id = nanoid(6);
+  urlDatabase[id] = req.body.longURL;
+  console.log(urlDatabase);
+  res.send('ok');
 });
 
 app.listen(port, () => console.log(`App listening on port ${port}`));
