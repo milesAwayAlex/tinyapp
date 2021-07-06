@@ -12,6 +12,7 @@ app.use(morgan('dev'));
 app.set('view engine', 'ejs');
 app.get('/', (req, res) => res.send('Hello!'));
 app.get('/urls', (req, res) => res.render('urlsIndex', { urls: urlDatabase }));
+app.get('/urls/new', (req, res) => res.render('urlsNew'));
 app.get('/urls/:shortURL', (req, res) => {
   const { shortURL } = req.params;
   const longURL = urlDatabase[shortURL];
