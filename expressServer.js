@@ -7,7 +7,9 @@ const urlDatabase = {
   b2xVn2: 'http://www.lighthouselabs.ca',
   '9sm5xK': 'http://www.google.com',
 };
+
 app.use(morgan('dev'));
 app.get('/', (req, res) => res.send('Hello!'));
+app.get('/urls.json', (req, res) => res.json(urlDatabase));
 
 app.listen(port, () => console.log(`App listening on port ${port}`));
