@@ -26,12 +26,15 @@ app.get('/urls.json', (req, res) => res.json(urlDatabase));
 app.get('/hello', (req, res) => {
   res.send('<html><body>Hello <b>World</b></body></html>\n');
 });
+app.get('/u/:shortURL', (req, res) => {
+  const url = urlDatabase[req.params.shortURL] || '/urls/new';
+  res.redirect(url);
+});
 
 app.post('/urls', (req, res) => {
   const id = nanoid(6);
   urlDatabase[id] = req.body.longURL;
-  console.log(urlDatabase);
-  res.send('ok');
+  res.redirect(`/urls/${id}`);
 });
 
 app.listen(port, () => console.log(`App listening on port ${port}`));
