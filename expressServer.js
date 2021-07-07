@@ -1,6 +1,5 @@
 import express from 'express';
 import morgan from 'morgan';
-import parser from 'body-parser';
 import { nanoid } from 'nanoid';
 
 const port = 8080;
@@ -11,7 +10,7 @@ const urlDatabase = {
 };
 
 app.use(morgan('dev'));
-app.use(parser.urlencoded({ extended: true }));
+app.use(express.urlencoded());
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => res.send('Hello!'));
@@ -33,7 +32,11 @@ app.get('/u/:shortURL', (req, res) => {
 
 app.post('/urls', (req, res) => {
   const id = nanoid(6);
-  urlDatabase[id] = req.body.longURL;
+  let { longURL } = req.body;
+  if (!longURL.includes('http')) {
+    longURL = `http://${longURL}`;
+  }
+  urlDatabase[id] = longURL;
   res.redirect(`/urls/${id}`);
 });
 
