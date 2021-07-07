@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import morgan from 'morgan';
 import { nanoid } from 'nanoid';
@@ -11,16 +12,24 @@ const urlDatabase = {
 const fixHTTP = (address) => (address.includes('http') ? address : `http://${address}`);
 
 app.use(morgan('dev'));
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => res.send('Hello!'));
-app.get('/urls', (req, res) => res.render('urlsIndex', { urls: urlDatabase }));
-app.get('/urls/new', (req, res) => res.render('urlsNew'));
+app.get('/urls', (req, res) => {
+  const { username } = req.cookies;
+  res.render('urlsIndex', { urls: urlDatabase, username });
+});
+app.get('/urls/new', (req, res) => {
+  const { username } = req.cookies;
+  res.render('urlsNew', { username });
+});
 app.get('/urls/:shortURL', (req, res) => {
   const { shortURL } = req.params;
+  const { username } = req.cookies;
   const longURL = urlDatabase[shortURL];
-  res.render('urlShow', { shortURL, longURL });
+  res.render('urlShow', { shortURL, longURL, username });
 });
 app.get('/urls.json', (req, res) => res.json(urlDatabase));
 app.get('/hello', (req, res) => {
@@ -50,6 +59,9 @@ app.post('/urls/:id', (req, res) => {
 app.post('/login', (req, res) => {
   const { username } = req.body;
   res.cookie('username', username).redirect('/urls');
+});
+app.post('/logout', (req, res) => {
+  res.clearCookie('username').redirect('/urls');
 });
 
 app.listen(port, () => console.log(`App listening on port ${port}`));
