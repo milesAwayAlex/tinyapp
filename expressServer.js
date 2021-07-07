@@ -47,5 +47,9 @@ app.post('/urls/:id', (req, res) => {
   urlDatabase[id] = fixHTTP(req.body.newURL);
   res.redirect('/urls');
 });
+app.post('/login', (req, res) => {
+  const { username } = req.body;
+  res.cookie('username', username).redirect('/urls');
+});
 
 app.listen(port, () => console.log(`App listening on port ${port}`));
