@@ -10,7 +10,7 @@ const urlDatabase = {
 };
 
 app.use(morgan('dev'));
-app.use(express.urlencoded());
+app.use(express.urlencoded({ extended: false }));
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => res.send('Hello!'));
