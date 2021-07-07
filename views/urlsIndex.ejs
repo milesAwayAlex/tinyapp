@@ -13,13 +13,19 @@
           <tr>
             <th scope="col">Short URL</th>
             <th scope="col">Long URL</th>
+            <th scope="col">Delete</th>
           </tr>
         </thead>
         <tbody>
           <% Object.entries(urls).forEach(([key,value]) => { %>
           <tr>
-            <td><%= key %></td>
-            <td><%= value %></td>
+            <td><a href=<%= "/urls/" + key %>><%= key %></a></td>
+            <td><a href=<%= value %>><%= value %></a></td>
+            <td>
+              <button type="button" class="btn btn-outline-danger">
+                Danger
+              </button>
+            </td>
           </tr>
           <% }) %>
         </tbody>
