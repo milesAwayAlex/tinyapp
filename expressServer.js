@@ -17,6 +17,7 @@ app.use(express.urlencoded({ extended: false }));
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => res.send('Hello!'));
+app.get('/register', (req, res) => res.render('register', { username: undefined }));
 app.get('/urls', (req, res) => {
   const { username } = req.cookies;
   res.render('urlsIndex', { urls: urlDatabase, username });
