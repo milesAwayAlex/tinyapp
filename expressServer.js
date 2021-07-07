@@ -9,6 +9,19 @@ const urlDatabase = {
   b2xVn2: 'http://www.lighthouselabs.ca',
   '9sm5xK': 'http://www.google.com',
 };
+const users = {
+  userRandomID: {
+    id: 'userRandomID',
+    email: 'u@a.b',
+    password: 'password',
+  },
+  user2RandomID: {
+    id: 'user2RandomID',
+    email: 'user2@example.com',
+    password: 'dishwasher-funk',
+  },
+};
+
 const fixHTTP = (address) => (address.includes('http') ? address : `http://${address}`);
 
 app.use(morgan('dev'));
@@ -17,20 +30,20 @@ app.use(express.urlencoded({ extended: false }));
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => res.send('Hello!'));
-app.get('/register', (req, res) => res.render('register', { username: undefined }));
+app.get('/register', (req, res) => res.render('register', { user: undefined }));
 app.get('/urls', (req, res) => {
-  const { username } = req.cookies;
-  res.render('urlsIndex', { urls: urlDatabase, username });
+  const user = users[req.cookies.user_id];
+  res.render('urlsIndex', { urls: urlDatabase, user });
 });
 app.get('/urls/new', (req, res) => {
-  const { username } = req.cookies;
-  res.render('urlsNew', { username });
+  const user = users[req.cookies.user_id];
+  res.render('urlsNew', { user });
 });
 app.get('/urls/:shortURL', (req, res) => {
   const { shortURL } = req.params;
-  const { username } = req.cookies;
+  const user = users[req.cookies.user_id];
   const longURL = urlDatabase[shortURL];
-  res.render('urlShow', { shortURL, longURL, username });
+  res.render('urlShow', { shortURL, longURL, user });
 });
 app.get('/urls.json', (req, res) => res.json(urlDatabase));
 app.get('/hello', (req, res) => {
@@ -41,6 +54,12 @@ app.get('/u/:shortURL', (req, res) => {
   res.redirect(url);
 });
 
+app.post('/register', (req, res) => {
+  const id = nanoid(6);
+  const { email, password } = req.body;
+  users[id] = { id, email, password };
+  res.cookie('user_id', id).redirect('/urls');
+});
 app.post('/urls', (req, res) => {
   const id = nanoid(6);
   const { longURL } = req.body;
