@@ -8,6 +8,7 @@ const urlDatabase = {
   b2xVn2: 'http://www.lighthouselabs.ca',
   '9sm5xK': 'http://www.google.com',
 };
+const fixHTTP = (address) => (address.includes('http') ? address : `http://${address}`);
 
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: false }));
@@ -32,16 +33,18 @@ app.get('/u/:shortURL', (req, res) => {
 
 app.post('/urls', (req, res) => {
   const id = nanoid(6);
-  let { longURL } = req.body;
-  if (!longURL.includes('http')) {
-    longURL = `http://${longURL}`;
-  }
-  urlDatabase[id] = longURL;
+  const { longURL } = req.body;
+  urlDatabase[id] = fixHTTP(longURL);
   res.redirect(`/urls/${id}`);
 });
 app.post('/urls/:id/delete', (req, res) => {
   const { id } = req.params;
   delete urlDatabase[id];
+  res.redirect('/urls');
+});
+app.post('/urls/:id', (req, res) => {
+  const { id } = req.params;
+  urlDatabase[id] = fixHTTP(req.body.newURL);
   res.redirect('/urls');
 });
 
