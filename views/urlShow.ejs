@@ -14,7 +14,28 @@
           Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a>
         </p>
       </div>
-      <div class="card-footer text-muted"><a href="#">Create new URL</a></div>
+      <div class="card-footer text-muted">
+        <h2>Edit</h2>
+        <form method="POST" action="/urls/<%= shortURL %>">
+          <div class="row">
+            <div class="col">
+              <label for="newURL">New Url</label>
+            </div>
+            <div class="col">
+              <input
+                id="newURL"
+                type="text"
+                class="form-control"
+                placeholder="http://"
+              />
+            </div>
+            <div class="col">
+              <button type="submit" class="btn btn-primary mb-2">Update</button>
+            </div>
+          </div>
+        </form>
+        <a href="/urls/new">Create new URL</a>
+      </div>
     </div>
   </body>
 </html>
