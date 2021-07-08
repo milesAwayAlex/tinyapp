@@ -67,12 +67,6 @@ app.get('/urls/:shortURL', (req, res) => {
   return res.render('urlShow', { shortURL, longURL, user });
 });
 
-// app.get('/urls.json', (req, res) => res.json(urlDatabase));
-
-// app.get('/hello', (req, res) => {
-//   res.send('<html><body>Hello <b>World</b></body></html>\n');
-// });
-
 app.get('/u/:shortURL', (req, res) => {
   try {
     const { longURL } = urlDatabase[req.params.shortURL];
@@ -108,15 +102,37 @@ app.post('/urls', (req, res) => {
   return res.redirect(`/urls/${id}`);
 });
 app.post('/urls/:id/delete', (req, res) => {
+  const user = users[req.cookies.user_id];
+  if (!user) {
+    return res.status(401).send('Only logged-in users can delete records');
+  }
   const { id } = req.params;
+  if (!Object.keys(urlDatabase).includes(id)) {
+    return res.status(404).send('URL not found');
+  }
+  const { userID } = urlDatabase[id];
+  if (user.id !== userID) {
+    return res.status(401).send('Only the owner of the record can delete it');
+  }
   delete urlDatabase[id];
-  res.redirect('/urls');
+  return res.redirect('/urls');
 });
 app.post('/urls/:id', (req, res) => {
+  const user = users[req.cookies.user_id];
+  if (!user) {
+    return res.status(401).send('Only logged-in users can update records');
+  }
   const { id } = req.params;
+  if (!Object.keys(urlDatabase).includes(id)) {
+    return res.status(404).send('URL not found');
+  }
+  const { userID } = urlDatabase[id];
+  if (user.id !== userID) {
+    return res.status(401).send('Only the owner of the record can update it');
+  }
   const longURL = fixHTTP(req.body.newURL);
   urlDatabase[id] = { ...urlDatabase[id], longURL };
-  res.redirect('/urls');
+  return res.redirect('/urls');
 });
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
