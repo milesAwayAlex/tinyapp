@@ -1,8 +1,8 @@
-import cookieParser from 'cookie-parser';
 import express from 'express';
 import morgan from 'morgan';
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcryptjs';
+import session from 'cookie-session';
 
 const port = 8080;
 const app = express();
@@ -23,17 +23,19 @@ const users = {
   },
 };
 
-const fixHTTP = (address) =>
-  address.includes('http') ? address : `http://${address}`;
-const findUser = (searchEmail) =>
-  Object.values(users).find(({ email }) => email === searchEmail);
-const urlsForUser = (id, db) =>
-  Object.fromEntries(
-    Object.entries(db).filter(([, { userID }]) => userID === id)
-  );
+const fixHTTP = (address) => (address.includes('http') ? address : `http://${address}`);
+const findUser = (searchEmail) => Object.values(users).find(({ email }) => email === searchEmail);
+const urlsForUser = (id, db) => Object.fromEntries(
+  Object.entries(db).filter(([, { userID }]) => userID === id),
+);
 
 app.use(morgan('dev'));
-app.use(cookieParser());
+app.use(
+  session({
+    name: 'session',
+    keys: ['3O2cXQBcm/.bNoYB4pe', 'LvL.IwC.gmbdQ50c09X.'],
+  }),
+);
 app.use(express.urlencoded({ extended: false }));
 app.set('view engine', 'ejs');
 
@@ -41,7 +43,7 @@ app.get('/', (req, res) => res.send('Hello!'));
 app.get('/login', (req, res) => res.render('login', { user: undefined }));
 app.get('/register', (req, res) => res.render('register', { user: undefined }));
 app.get('/urls', (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.userID];
   if (!user) {
     return res.status(401).send('Only logged-in users can see the records');
   }
@@ -49,7 +51,7 @@ app.get('/urls', (req, res) => {
   return res.render('urlsIndex', { urls, user });
 });
 app.get('/urls/new', (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.userID];
   if (!user) return res.redirect('/login');
   return res.render('urlsNew', { user });
 });
@@ -58,7 +60,7 @@ app.get('/urls/:shortURL', (req, res) => {
   if (!Object.keys(urlDatabase).includes(shortURL)) {
     return res.status(404).send('URL not found');
   }
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.userID];
   if (!user) {
     return res.status(401).send('Only logged-in users can see the records');
   }
@@ -90,12 +92,12 @@ app.post('/register', async (req, res) => {
   }
   const id = nanoid(6);
   const hashedPass = await bcrypt.hash(password, 10);
-  // console.log(password, hashedPass);
   users[id] = { id, email, password: hashedPass };
-  return res.cookie('user_id', id).redirect('/urls');
+  req.session.userID = id;
+  return res.redirect('/urls');
 });
 app.post('/urls', (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.userID];
   if (!user) {
     return res
       .status(401)
@@ -108,7 +110,7 @@ app.post('/urls', (req, res) => {
   return res.redirect(`/urls/${id}`);
 });
 app.post('/urls/:id/delete', (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.userID];
   if (!user) {
     return res.status(401).send('Only logged-in users can delete records');
   }
@@ -124,7 +126,7 @@ app.post('/urls/:id/delete', (req, res) => {
   return res.redirect('/urls');
 });
 app.post('/urls/:id', (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.userID];
   if (!user) {
     return res.status(401).send('Only logged-in users can update records');
   }
@@ -144,14 +146,15 @@ app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = findUser(email);
   const passMatch = await bcrypt.compare(password, user.password);
-  console.log('password match:', passMatch);
   if (!user || !passMatch) {
     return res.status(403).send('Incorrect email or password');
   }
-  return res.cookie('user_id', user.id).redirect('/urls');
+  req.session.userID = user.id;
+  return res.redirect('/urls');
 });
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id').redirect('/urls');
+  req.session = null;
+  return res.redirect('/urls');
 });
 
 app.listen(port);
