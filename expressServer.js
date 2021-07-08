@@ -24,6 +24,9 @@ const users = {
 
 const fixHTTP = (address) => (address.includes('http') ? address : `http://${address}`);
 const findUser = (searchEmail) => Object.values(users).find(({ email }) => email === searchEmail);
+const urlsForUser = (id, db) => Object.fromEntries(
+  Object.entries(db).filter(([, { userID }]) => userID === id),
+);
 
 app.use(morgan('dev'));
 app.use(cookieParser());
@@ -35,7 +38,11 @@ app.get('/login', (req, res) => res.render('login', { user: undefined }));
 app.get('/register', (req, res) => res.render('register', { user: undefined }));
 app.get('/urls', (req, res) => {
   const user = users[req.cookies.user_id];
-  res.render('urlsIndex', { urls: urlDatabase, user });
+  if (!user) {
+    return res.status(401).send('Only logged-in users can see the records');
+  }
+  const urls = urlsForUser(user.id, urlDatabase);
+  return res.render('urlsIndex', { urls, user });
 });
 app.get('/urls/new', (req, res) => {
   const user = users[req.cookies.user_id];
@@ -44,9 +51,20 @@ app.get('/urls/new', (req, res) => {
 });
 app.get('/urls/:shortURL', (req, res) => {
   const { shortURL } = req.params;
+  if (!Object.keys(urlDatabase).includes(shortURL)) {
+    return res.status(404).send('URL not found');
+  }
   const user = users[req.cookies.user_id];
-  const { longURL } = urlDatabase[shortURL];
-  res.render('urlShow', { shortURL, longURL, user });
+  if (!user) {
+    return res.status(401).send('Only logged-in users can see the records');
+  }
+  const { longURL, userID } = urlDatabase[shortURL];
+  if (user.id !== userID) {
+    return res
+      .status(401)
+      .send('Only the owner of the record can see the details');
+  }
+  return res.render('urlShow', { shortURL, longURL, user });
 });
 
 // app.get('/urls.json', (req, res) => res.json(urlDatabase));
@@ -84,8 +102,9 @@ app.post('/urls', (req, res) => {
       .send('Only logged-in users can generate new records');
   }
   const id = nanoid(6);
+  const userID = user.id;
   const longURL = fixHTTP(req.body.longURL);
-  urlDatabase[id] = { longURL }; // TODO
+  urlDatabase[id] = { longURL, userID };
   return res.redirect(`/urls/${id}`);
 });
 app.post('/urls/:id/delete', (req, res) => {
