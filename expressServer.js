@@ -2,6 +2,7 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import morgan from 'morgan';
 import { nanoid } from 'nanoid';
+import bcrypt from 'bcryptjs';
 
 const port = 8080;
 const app = express();
@@ -12,21 +13,24 @@ const urlDatabase = {
 const users = {
   userRandomID: {
     id: 'userRandomID',
-    email: 'u@a.b',
-    password: 'password',
+    email: 'a@b.c',
+    password: '$2a$10$8u.Ic0/ogqok0xO2VQsX/udyT/fCDPfQoLvL.IwC.gmbdQ50c09X.',
   },
   user2RandomID: {
     id: 'user2RandomID',
-    email: 'user2@example.com',
-    password: 'dishwasher-funk',
+    email: 'x@y.z',
+    password: '$2a$10$vcjOlD/3CAz6Y1hqkQiKze1BPKveTf04yc3O2cXQBcm/.bNoYB4pe',
   },
 };
 
-const fixHTTP = (address) => (address.includes('http') ? address : `http://${address}`);
-const findUser = (searchEmail) => Object.values(users).find(({ email }) => email === searchEmail);
-const urlsForUser = (id, db) => Object.fromEntries(
-  Object.entries(db).filter(([, { userID }]) => userID === id),
-);
+const fixHTTP = (address) =>
+  address.includes('http') ? address : `http://${address}`;
+const findUser = (searchEmail) =>
+  Object.values(users).find(({ email }) => email === searchEmail);
+const urlsForUser = (id, db) =>
+  Object.fromEntries(
+    Object.entries(db).filter(([, { userID }]) => userID === id)
+  );
 
 app.use(morgan('dev'));
 app.use(cookieParser());
@@ -76,7 +80,7 @@ app.get('/u/:shortURL', (req, res) => {
   }
 });
 
-app.post('/register', (req, res) => {
+app.post('/register', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).send('Email and password cannot be empty');
@@ -85,7 +89,9 @@ app.post('/register', (req, res) => {
     return res.status(400).send(`${email} is already used on the site`);
   }
   const id = nanoid(6);
-  users[id] = { id, email, password };
+  const hashedPass = await bcrypt.hash(password, 10);
+  // console.log(password, hashedPass);
+  users[id] = { id, email, password: hashedPass };
   return res.cookie('user_id', id).redirect('/urls');
 });
 app.post('/urls', (req, res) => {
@@ -134,10 +140,12 @@ app.post('/urls/:id', (req, res) => {
   urlDatabase[id] = { ...urlDatabase[id], longURL };
   return res.redirect('/urls');
 });
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = findUser(email);
-  if (!user || user.password !== password) {
+  const passMatch = await bcrypt.compare(password, user.password);
+  console.log('password match:', passMatch);
+  if (!user || !passMatch) {
     return res.status(403).send('Incorrect email or password');
   }
   return res.cookie('user_id', user.id).redirect('/urls');
