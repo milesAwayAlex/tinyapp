@@ -21,25 +21,15 @@
         <% if(!username) { %>
         <a class="nav-item nav-link" href="/register">Register</a>
         <a class="nav-item nav-link" href="/login">Log in</a>
-        <!-- <form class="form-inline" action="/login" method="POST">
-            <div class="input-group mb-2 mr-sm-2">
-              <input
-              class="form-control"
-              type="text"
-              name="username"
-              placeholder="username"
-              />
-              <button type="submit" class="btn btn-primary">Login</button>
-            </div>
-          </form> -->
         <% } else { %>
-        <a class="nav-item nav-link" href="/logout">Log out</a>
-        <!-- <form class="form-inline" action="/logout" method="POST">
+        <form class="form-inline" action="/logout" method="POST">
           <label style="color: gray"
-          >Logged in as <%= username %>
-          <button type="submit" class="btn btn-outline-primary">Logout</button>
-        </label>
-      </form> -->
+            >Logged in as <%= username %>
+            <button type="submit" class="btn btn-outline-primary">
+              Logout
+            </button>
+          </label>
+        </form>
         <% } %>
       </div>
     </div>

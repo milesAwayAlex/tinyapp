@@ -85,11 +85,15 @@ app.post('/urls/:id', (req, res) => {
   res.redirect('/urls');
 });
 app.post('/login', (req, res) => {
-  const { username } = req.body;
-  res.cookie('username', username).redirect('/urls');
+  const { email, password } = req.body;
+  const user = findUser(email);
+  if (!user || user.password !== password) {
+    return res.status(403).send('Incorrect email or password');
+  }
+  return res.cookie('user_id', user.id).redirect('/urls');
 });
 app.post('/logout', (req, res) => {
-  res.clearCookie('username').redirect('/urls');
+  res.clearCookie('user_id').redirect('/urls');
 });
 
 app.listen(port);
