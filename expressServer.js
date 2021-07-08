@@ -31,6 +31,7 @@ app.use(express.urlencoded({ extended: false }));
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => res.send('Hello!'));
+app.get('/login', (req, res) => res.render('login', { user: undefined }));
 app.get('/register', (req, res) => res.render('register', { user: undefined }));
 app.get('/urls', (req, res) => {
   const user = users[req.cookies.user_id];
