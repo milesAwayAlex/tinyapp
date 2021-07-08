@@ -18,10 +18,10 @@
           </tr>
         </thead>
         <tbody>
-          <% Object.entries(urls).forEach(([key,value]) => { %>
+          <% Object.entries(urls).forEach(([key,{longURL}]) => { %>
           <tr>
             <td><a href="/urls/<%= key %>"><%= key %></a></td>
-            <td><a href="<%= value %>"><%= value %></a></td>
+            <td><a href="<%= longURL %>"><%= longURL %></a></td>
             <td>
               <a href="/urls/<%= key %>">
                 <button type="submit" class="btn btn-outline-primary">
