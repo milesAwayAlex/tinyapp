@@ -23,6 +23,7 @@ const users = {
 };
 
 const fixHTTP = (address) => (address.includes('http') ? address : `http://${address}`);
+const findUser = (searchEmail) => Object.values(users).find(({ email }) => email === searchEmail);
 
 app.use(morgan('dev'));
 app.use(cookieParser());
@@ -55,10 +56,16 @@ app.get('/u/:shortURL', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-  const id = nanoid(6);
   const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).send('Email and password cannot be empty');
+  }
+  if (findUser(email)) {
+    return res.status(400).send(`${email} is already used on the site`);
+  }
+  const id = nanoid(6);
   users[id] = { id, email, password };
-  res.cookie('user_id', id).redirect('/urls');
+  return res.cookie('user_id', id).redirect('/urls');
 });
 app.post('/urls', (req, res) => {
   const id = nanoid(6);
