@@ -3,6 +3,7 @@ import morgan from 'morgan';
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcryptjs';
 import session from 'cookie-session';
+import { fixHTTP, findUser, urlsForUser } from './helpers.js';
 
 const port = 8080;
 const app = express();
@@ -22,12 +23,6 @@ const users = {
     password: '$2a$10$vcjOlD/3CAz6Y1hqkQiKze1BPKveTf04yc3O2cXQBcm/.bNoYB4pe',
   },
 };
-
-const fixHTTP = (address) => (address.includes('http') ? address : `http://${address}`);
-const findUser = (searchEmail) => Object.values(users).find(({ email }) => email === searchEmail);
-const urlsForUser = (id, db) => Object.fromEntries(
-  Object.entries(db).filter(([, { userID }]) => userID === id),
-);
 
 app.use(morgan('dev'));
 app.use(
@@ -87,7 +82,7 @@ app.post('/register', async (req, res) => {
   if (!email || !password) {
     return res.status(400).send('Email and password cannot be empty');
   }
-  if (findUser(email)) {
+  if (findUser(email, users)) {
     return res.status(400).send(`${email} is already used on the site`);
   }
   const id = nanoid(6);
@@ -144,7 +139,7 @@ app.post('/urls/:id', (req, res) => {
 });
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  const user = findUser(email);
+  const user = findUser(email, users);
   const passMatch = await bcrypt.compare(password, user.password);
   if (!user || !passMatch) {
     return res.status(403).send('Incorrect email or password');
