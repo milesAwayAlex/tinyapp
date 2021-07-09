@@ -1,11 +1,9 @@
 import express from 'express';
-import morgan from 'morgan';
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcryptjs';
 import session from 'cookie-session';
 import { fixHTTP, findUser, urlsForUser } from './helpers.js';
 
-const port = 8080;
 const app = express();
 const urlDatabase = {
   b2xVn2: { longURL: 'http://www.lighthouselabs.ca', userID: 'userRandomID' },
@@ -24,7 +22,6 @@ const users = {
   },
 };
 
-app.use(morgan('dev'));
 app.use(
   session({
     name: 'session',
@@ -152,4 +149,4 @@ app.post('/logout', (req, res) => {
   return res.redirect('/urls');
 });
 
-app.listen(port);
+export default app;
