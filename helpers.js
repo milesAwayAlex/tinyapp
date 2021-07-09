@@ -1,5 +1,5 @@
 const fixHTTP = (address) =>
-  (address.includes('http') ? address : `http://${address}`);
+  (address.startsWith('http://') ? address : `http://${address}`);
 const findUser = (searchEmail, db) =>
   Object.values(db).find(({ email }) => email === searchEmail);
 const urlsForUser = (id, db) =>
