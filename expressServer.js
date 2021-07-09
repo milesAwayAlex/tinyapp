@@ -31,13 +31,28 @@ app.use(
 app.use(express.urlencoded({ extended: false }));
 app.set('view engine', 'ejs');
 
-app.get('/', (req, res) => res.send('Hello!'));
-app.get('/login', (req, res) => res.render('login', { user: undefined }));
-app.get('/register', (req, res) => res.render('register', { user: undefined }));
+app.get('/', (req, res) => res.redirect('/login'));
+app.get('/login', (req, res) => {
+  const user = users[req.session.userID];
+  if (user) {
+    return res.redirect('/urls');
+  }
+  return res.render('login', { user: undefined });
+});
+app.get('/register', (req, res) => {
+  const user = users[req.session.userID];
+  if (user) {
+    return res.redirect('/urls');
+  }
+  return res.render('register', { user: undefined });
+});
 app.get('/urls', (req, res) => {
   const user = users[req.session.userID];
   if (!user) {
-    return res.status(401).send('Only logged-in users can see the records');
+    return res.status(401).render('error', {
+      user: undefined,
+      message: 'Only logged-in users can see the records',
+    });
   }
   const urls = urlsForUser(user.id, urlDatabase);
   return res.render('urlsIndex', { urls, user });
@@ -49,38 +64,49 @@ app.get('/urls/new', (req, res) => {
 });
 app.get('/urls/:shortURL', (req, res) => {
   const { shortURL } = req.params;
-  if (!Object.keys(urlDatabase).includes(shortURL)) {
-    return res.status(404).send('URL not found');
-  }
   const user = users[req.session.userID];
+  if (!Object.keys(urlDatabase).includes(shortURL)) {
+    return res.status(404).render('error', { user, message: 'URL not found' });
+  }
   if (!user) {
-    return res.status(401).send('Only logged-in users can see the records');
+    return res.status(401).render('error', {
+      user: undefined,
+      message: 'Only logged-in users can see the records',
+    });
   }
   const { longURL, userID } = urlDatabase[shortURL];
   if (user.id !== userID) {
-    return res
-      .status(401)
-      .send('Only the owner of the record can see the details');
+    return res.status(401).render('error', {
+      user,
+      message: 'Only the owner of the record can see the details',
+    });
   }
   return res.render('urlShow', { shortURL, longURL, user });
 });
 
 app.get('/u/:shortURL', (req, res) => {
+  const user = users[req.session.userID] || undefined;
   try {
     const { longURL } = urlDatabase[req.params.shortURL];
     res.redirect(longURL);
   } catch (err) {
-    res.status(404).send('URL not found');
+    res.status(404).render('error', { user, message: 'URL not found' });
   }
 });
 
 app.post('/register', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).send('Email and password cannot be empty');
+    return res.status(400).render('error', {
+      user: undefined,
+      message: 'Email and password cannot be empty',
+    });
   }
   if (findUser(email, users)) {
-    return res.status(400).send(`${email} is already used on the site`);
+    return res.status(400).render('error', {
+      user: undefined,
+      message: `${email} is already used on the site`,
+    });
   }
   const id = nanoid(6);
   const hashedPass = await bcrypt.hash(password, 10);
@@ -91,9 +117,10 @@ app.post('/register', async (req, res) => {
 app.post('/urls', (req, res) => {
   const user = users[req.session.userID];
   if (!user) {
-    return res
-      .status(401)
-      .send('Only logged-in users can generate new records');
+    return res.status(401).render('error', {
+      user: undefined,
+      message: 'Only logged-in users can generate new records',
+    });
   }
   const id = nanoid(6);
   const userID = user.id;
@@ -104,15 +131,21 @@ app.post('/urls', (req, res) => {
 app.post('/urls/:id/delete', (req, res) => {
   const user = users[req.session.userID];
   if (!user) {
-    return res.status(401).send('Only logged-in users can delete records');
+    return res.status(401).render('error', {
+      user: undefined,
+      message: 'Only logged-in users can delete records',
+    });
   }
   const { id } = req.params;
   if (!Object.keys(urlDatabase).includes(id)) {
-    return res.status(404).send('URL not found');
+    return res.status(404).render('error', { user, message: 'URL not found' });
   }
   const { userID } = urlDatabase[id];
   if (user.id !== userID) {
-    return res.status(401).send('Only the owner of the record can delete it');
+    return res.status(401).render('error', {
+      user,
+      message: 'Only the owner of the record can delete it',
+    });
   }
   delete urlDatabase[id];
   return res.redirect('/urls');
@@ -120,15 +153,21 @@ app.post('/urls/:id/delete', (req, res) => {
 app.post('/urls/:id', (req, res) => {
   const user = users[req.session.userID];
   if (!user) {
-    return res.status(401).send('Only logged-in users can update records');
+    return res.status(401).render('error', {
+      user: undefined,
+      message: 'Only logged-in users can update records',
+    });
   }
   const { id } = req.params;
   if (!Object.keys(urlDatabase).includes(id)) {
-    return res.status(404).send('URL not found');
+    return res.status(404).render('error', { user, message: 'URL not found' });
   }
   const { userID } = urlDatabase[id];
   if (user.id !== userID) {
-    return res.status(401).send('Only the owner of the record can update it');
+    return res.status(401).render('error', {
+      user,
+      message: 'Only the owner of the record can update it',
+    });
   }
   const longURL = fixHTTP(req.body.newURL);
   urlDatabase[id] = { ...urlDatabase[id], longURL };
@@ -139,7 +178,10 @@ app.post('/login', async (req, res) => {
   const user = findUser(email, users);
   const passMatch = await bcrypt.compare(password, user.password);
   if (!user || !passMatch) {
-    return res.status(403).send('Incorrect email or password');
+    return res.status(403).render('error', {
+      user: undefined,
+      message: 'Incorrect email or password',
+    });
   }
   req.session.userID = user.id;
   return res.redirect('/urls');
