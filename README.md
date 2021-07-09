@@ -4,6 +4,10 @@ TinyApp is an almost-full-stack (without persistent database) web application bu
 
 ## Screenshots
 
+!["See your shortened URLs"](https://raw.githubusercontent.com/milesAwayAlex/tinyapp/main/docs/url-list.png)
+
+!["Easily shorten moar URLs"](https://raw.githubusercontent.com/milesAwayAlex/tinyapp/main/docs/new-url.png)
+
 ## Instructions
 
 - Clone the repository - `git clone https://github.com/milesAwayAlex/tinyapp.git`
